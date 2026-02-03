@@ -6,91 +6,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-}
+body { margin:0; font-family: Arial, sans-serif; background:#f4f6f8; }
+header { background:#111; color:#fff; padding:20px; text-align:center; }
+#map { height:320px; margin:20px; border-radius:8px; }
 
-header {
-  background: #111;
-  color: #fff;
-  padding: 20px;
-  text-align: center;
-}
-
-header h1 {
-  margin: 0;
-  font-size: 28px;
-}
-
-header p {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: #ccc;
-}
-
-.container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 20px;
-}
-
+.container { max-width:1100px; margin:auto; padding:20px; }
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
 }
-
 .card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background:#fff;
+  border-radius:8px;
+  padding:16px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
-
-.card h3 {
-  margin: 0 0 6px;
-}
-
-.area {
-  font-size: 13px;
-  color: #555;
-}
-
-.price {
-  margin: 10px 0;
-  font-size: 18px;
-  font-weight: bold;
-  color: #2e7d32;
-}
-
-.features {
-  font-size: 14px;
-  margin-bottom: 12px;
-  color: #333;
-}
-
+.price { color:#2e7d32; font-weight:bold; }
 button {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  background: #ff3d00;
-  color: #fff;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #e53900;
-}
-
-footer {
-  text-align: center;
-  font-size: 13px;
-  color: #666;
-  padding: 20px;
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:4px;
+  background:#ff3d00;
+  color:#fff;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -102,47 +42,74 @@ footer {
   <p>Find, compare & buy gym memberships in Kolkata</p>
 </header>
 
+<div id="map"></div>
+
 <div class="container">
   <div class="grid">
 
     <div class="card">
       <h3>Iron Paradise Gym</h3>
-      <div class="area">📍 Salt Lake</div>
+      <p>📍 Salt Lake</p>
       <div class="price">₹1,500 / month</div>
-      <div class="features">AC • Personal Trainer • Weights</div>
+      <p>AC • Trainer • Weights</p>
       <button>Buy Membership</button>
     </div>
 
     <div class="card">
       <h3>FitLife Fitness</h3>
-      <div class="area">📍 New Town</div>
+      <p>📍 New Town</p>
       <div class="price">₹1,200 / month</div>
-      <div class="features">AC • Yoga • Cardio</div>
+      <p>AC • Yoga • Cardio</p>
       <button>Buy Membership</button>
     </div>
 
     <div class="card">
       <h3>Muscle Factory</h3>
-      <div class="area">📍 Garia</div>
+      <p>📍 Garia</p>
       <div class="price">₹1,800 / month</div>
-      <div class="features">CrossFit • Heavy Weights</div>
-      <button>Buy Membership</button>
-    </div>
-
-    <div class="card">
-      <h3>Urban Flex Gym</h3>
-      <div class="area">📍 Behala</div>
-      <div class="price">₹1,000 / month</div>
-      <div class="features">Zumba • Cardio • AC</div>
+      <p>CrossFit • Heavy Weights</p>
       <button>Buy Membership</button>
     </div>
 
   </div>
 </div>
 
-<footer>
-  © 2026 Gymkhana • Kolkata launch
-</footer>
+<script>
+const gyms = [
+  { name:"Iron Paradise", lat:22.5867, lng:88.4171 },
+  { name:"FitLife Fitness", lat:22.5750, lng:88.4780 },
+  { name:"Muscle Factory", lat:22.4676, lng:88.3890 }
+];
+
+function initMap() {
+  navigator.geolocation.getCurrentPosition(pos => {
+    const userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    const map = new google.maps.Map(document.getElementById("map"), {
+      zoom: 12,
+      center: userLoc
+    });
+
+    new google.maps.Marker({
+      position: userLoc,
+      map,
+      label: "You"
+    });
+
+    gyms.forEach(g => {
+      new google.maps.Marker({
+        position: { lat: g.lat, lng: g.lng },
+        map,
+        title: g.name
+      });
+    });
+  });
+}
+</script>
+
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap">
+</script>
 
 </body>
 </html>
+
