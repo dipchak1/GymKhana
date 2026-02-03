@@ -6,31 +6,107 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body { margin:0; font-family: Arial, sans-serif; background:#f4f6f8; }
-header { background:#111; color:#fff; padding:20px; text-align:center; }
-#map { height:320px; margin:20px; border-radius:8px; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+}
 
-.container { max-width:1100px; margin:auto; padding:20px; }
+header {
+  background: #111;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+header p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #ccc;
+}
+
+#map {
+  height: 320px;
+  margin: 20px;
+  border-radius: 8px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+
+#compareBtn {
+  display: none;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 .grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-  gap:20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
 }
+
 .card {
-  background:#fff;
-  border-radius:8px;
-  padding:16px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-.price { color:#2e7d32; font-weight:bold; }
-button {
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:4px;
-  background:#ff3d00;
-  color:#fff;
-  cursor:pointer;
+
+.card h3 {
+  margin: 0 0 6px;
+}
+
+.area {
+  font-size: 13px;
+  color: #555;
+}
+
+.price {
+  margin: 10px 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+.features {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+label {
+  font-size: 14px;
+}
+
+button.buy {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 4px;
+  background: #ff3d00;
+  color: #fff;
+  cursor: pointer;
+}
+
+footer {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  padding: 20px;
 }
 </style>
 </head>
@@ -45,64 +121,169 @@ button {
 <div id="map"></div>
 
 <div class="container">
+
+  <button id="compareBtn" onclick="compareGyms()">Compare Selected Gyms</button>
+
   <div class="grid">
 
     <div class="card">
       <h3>Iron Paradise Gym</h3>
-      <p>📍 Salt Lake</p>
+      <div class="area">📍 Salt Lake</div>
       <div class="price">₹1,500 / month</div>
-      <p>AC • Trainer • Weights</p>
-      <button>Buy Membership</button>
+      <div class="features">AC • Personal Trainer • Weights</div>
+      <label>
+        <input type="checkbox"
+          onchange="toggleCompare(this,'Iron Paradise Gym',1500,'Yes','Yes','No')">
+        Compare
+      </label>
+      <button class="buy">Buy Membership</button>
     </div>
 
     <div class="card">
       <h3>FitLife Fitness</h3>
-      <p>📍 New Town</p>
+      <div class="area">📍 New Town</div>
       <div class="price">₹1,200 / month</div>
-      <p>AC • Yoga • Cardio</p>
-      <button>Buy Membership</button>
+      <div class="features">AC • Yoga • Cardio</div>
+      <label>
+        <input type="checkbox"
+          onchange="toggleCompare(this,'FitLife Fitness',1200,'No','Yes','Yes')">
+        Compare
+      </label>
+      <button class="buy">Buy Membership</button>
     </div>
 
     <div class="card">
       <h3>Muscle Factory</h3>
-      <p>📍 Garia</p>
+      <div class="area">📍 Garia</div>
       <div class="price">₹1,800 / month</div>
-      <p>CrossFit • Heavy Weights</p>
-      <button>Buy Membership</button>
+      <div class="features">CrossFit • Heavy Weights</div>
+      <label>
+        <input type="checkbox"
+          onchange="toggleCompare(this,'Muscle Factory',1800,'Yes','No','No')">
+        Compare
+      </label>
+      <button class="buy">Buy Membership</button>
     </div>
 
   </div>
 </div>
 
+<footer>
+  © 2026 Gymkhana • Kolkata launch
+</footer>
+
 <script>
-const gyms = [
+/* ---------- MAP LOGIC ---------- */
+
+const KOLKATA_CENTER = { lat: 22.5726, lng: 88.3639 };
+
+const gymsOnMap = [
   { name:"Iron Paradise", lat:22.5867, lng:88.4171 },
   { name:"FitLife Fitness", lat:22.5750, lng:88.4780 },
   { name:"Muscle Factory", lat:22.4676, lng:88.3890 }
 ];
 
 function initMap() {
-  navigator.geolocation.getCurrentPosition(pos => {
-    const userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-    const map = new google.maps.Map(document.getElementById("map"), {
-      zoom: 12,
-      center: userLoc
-    });
+  if (!navigator.geolocation) {
+    loadMap(KOLKATA_CENTER, false);
+    return;
+  }
 
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      if (pos.coords.accuracy > 5000) {
+        loadMap(KOLKATA_CENTER, false);
+      } else {
+        loadMap(
+          { lat: pos.coords.latitude, lng: pos.coords.longitude },
+          true
+        );
+      }
+    },
+    () => loadMap(KOLKATA_CENTER, false),
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+function loadMap(center, showUser) {
+  const map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 12,
+    center
+  });
+
+  if (showUser) {
     new google.maps.Marker({
-      position: userLoc,
+      position: center,
       map,
       label: "You"
     });
+  }
 
-    gyms.forEach(g => {
-      new google.maps.Marker({
-        position: { lat: g.lat, lng: g.lng },
-        map,
-        title: g.name
-      });
+  gymsOnMap.forEach(g => {
+    new google.maps.Marker({
+      position: { lat: g.lat, lng: g.lng },
+      map,
+      title: g.name
     });
   });
+}
+
+/* ---------- COMPARISON LOGIC ---------- */
+
+let selectedGyms = [];
+
+function toggleCompare(cb, name, price, trainer, ac, yoga) {
+  if (cb.checked) {
+    selectedGyms.push({ name, price, trainer, ac, yoga });
+  } else {
+    selectedGyms = selectedGyms.filter(g => g.name !== name);
+  }
+
+  document.getElementById("compareBtn").style.display =
+    selectedGyms.length >= 2 ? "block" : "none";
+}
+
+function compareGyms() {
+  let html = `
+    <h2>Gym Comparison</h2>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr>
+        <th>Feature</th>
+        ${selectedGyms.map(g => `<th>${g.name}</th>`).join("")}
+      </tr>
+      <tr>
+        <td>Price</td>
+        ${selectedGyms.map(g => `<td>₹${g.price}</td>`).join("")}
+      </tr>
+      <tr>
+        <td>Trainer</td>
+        ${selectedGyms.map(g => `<td>${g.trainer}</td>`).join("")}
+      </tr>
+      <tr>
+        <td>AC</td>
+        ${selectedGyms.map(g => `<td>${g.ac}</td>`).join("")}
+      </tr>
+      <tr>
+        <td>Yoga/Zumba</td>
+        ${selectedGyms.map(g => `<td>${g.yoga}</td>`).join("")}
+      </tr>
+    </table>
+  `;
+
+  const win = window.open("", "_blank");
+  win.document.write(`
+    <html>
+    <head>
+      <title>Gymkhana – Compare</title>
+      <style>
+        body { font-family:Arial;padding:20px; }
+        table,td,th { border:1px solid #ccc;padding:10px;text-align:center; }
+        th { background:#f4f6f8; }
+      </style>
+    </head>
+    <body>${html}</body>
+    </html>
+  `);
 }
 </script>
 
@@ -113,4 +294,3 @@ function initMap() {
 
 </body>
 </html>
-
